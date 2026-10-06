@@ -1,0 +1,5 @@
+:root { background: #101522; color: #f7edd3; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; display: grid; place-items: center; }
+#game-shell { width: min(100vw, 480px); height: min(100dvh, 920px); aspect-ratio: 390 / 844; overflow: hidden; background: #1d2940; }
+#game, #game canvas { width: 100% !important; height: 100% !important; display: block; touch-action: none; }
