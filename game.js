@@ -31,7 +31,13 @@ function label(scene, x, y, text, size = 16, color = '#f7edd3', style = {}) {
 class BattleScene extends Phaser.Scene {
   constructor() { super('battle'); }
 
+  preload() {
+    this.load.json('stageData', 'data/stages.json');
+  }
+
   create() {
+    this.stageData = this.cache.json.get('stageData');
+    this.stageConfig = this.stageData.stages.find(stage => stage.id === run.stage);
     this.enemies = [];
     this.shots = [];
     this.wave = 1;
@@ -52,28 +58,29 @@ class BattleScene extends Phaser.Scene {
   }
 
   drawBackground() {
-    this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x344b65);
-    this.add.rectangle(WIDTH / 2, 215, WIDTH, 430, 0x78b4cf);
-    this.add.circle(310, 120, 44, 0xf8df8c, 0.9);
-    for (let x = 20; x < WIDTH; x += 57) this.add.circle(x, 255 + (x % 4) * 9, 35, 0x588e78, 0.9);
-    this.add.rectangle(WIDTH / 2, 525, WIDTH, 255, 0x6a9d66);
-    this.add.rectangle(WIDTH / 2, 540, WIDTH, 115, 0x91b878);
-    this.add.rectangle(46, 481, 72, 130, 0x7f6751);
-    this.add.rectangle(46, 419, 88, 18, 0x6d4e42);
-    this.add.rectangle(23, 457, 18, 58, 0x6d4e42);
-    this.add.rectangle(69, 457, 18, 58, 0x6d4e42);
-    this.add.triangle(46, 357, 0, 419, 92, 419, 46, 340, 0x754956);
-    this.add.circle(105, 460, 21, colors.blue);
-    label(this, 82, 493, '영웅', 12, '#ffffff').setOrigin(0.5);
+    this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x6fa85f);
+    for (let y = 45; y < HEIGHT; y += 64) this.add.rectangle(WIDTH / 2, y, WIDTH, 32, 0x82b96b, 0.42);
+    for (let x = 114; x < WIDTH; x += 55) {
+      this.add.circle(x, 120 + (x * 19 % 590), 3, 0xa5d67d, 0.7);
+      this.add.circle(x + 14, 150 + (x * 23 % 560), 2, 0x4b8549, 0.7);
+    }
+    this.add.rectangle(43, HEIGHT / 2, 86, HEIGHT, 0x7f6751);
+    this.add.rectangle(89, HEIGHT / 2, 8, HEIGHT, 0x5d463b);
+    for (let y = 24; y < HEIGHT; y += 40) this.add.rectangle(40, y, 72, 3, 0xa38a69, 0.65);
+    this.add.rectangle(46, 145, 96, 17, 0x64463b);
+    this.add.rectangle(16, 130, 20, 28, 0x6d4e42);
+    this.add.rectangle(46, 130, 20, 28, 0x6d4e42);
+    this.add.rectangle(76, 130, 20, 28, 0x6d4e42);
+    this.add.circle(73, 118, 16, colors.blue).setStrokeStyle(2, 0xf7edd3);
+    this.add.rectangle(73, 138, 24, 12, 0x4c6b9a);
   }
 
   createHud() {
-    this.add.rectangle(WIDTH / 2, 32, WIDTH - 20, 48, colors.ink, 0.88).setStrokeStyle(1, 0x61738e);
-    this.waveText = label(this, 18, 18, '', 16);
-    this.goldText = label(this, 285, 18, '', 16, '#f6c85f');
-    this.hpBar = this.add.rectangle(92, 80, 142, 13, colors.green).setOrigin(0, 0.5);
-    this.add.rectangle(92, 80, 144, 15).setOrigin(0, 0.5).setStrokeStyle(2, colors.ink);
-    this.hpText = label(this, 18, 69, '성', 14);
+    this.add.rectangle(WIDTH / 2, 10, WIDTH, 20, colors.ink, 0.7);
+    this.add.rectangle(8, 10, 106, 7).setOrigin(0, 0.5).setStrokeStyle(1, colors.ink);
+    this.hpBar = this.add.rectangle(8, 10, 104, 5, colors.green).setOrigin(0, 0.5);
+    this.hpText = label(this, 119, 3, '', 10, '#f7edd3');
+    this.goldText = label(this, 334, 3, '', 10, '#f6c85f');
     this.add.rectangle(WIDTH / 2, HEIGHT - 58, WIDTH - 24, 82, colors.ink, 0.92).setStrokeStyle(2, 0x61738e);
     this.ammoText = label(this, 24, HEIGHT - 86, '', 18, '#f6c85f');
     this.tipText = label(this, 24, HEIGHT - 57, '화면을 터치해 강력한 화살을 쏘세요', 13, '#d4dfeb');
@@ -82,20 +89,20 @@ class BattleScene extends Phaser.Scene {
   }
 
   updateHud() {
-    this.waveText.setText(`스테이지 ${run.stage} · 웨이브 ${this.wave}/3`);
-    this.goldText.setText(`🪙 ${run.gold}`);
-    this.hpText.setText(`성 ${Math.ceil(run.hp)}/${run.maxHp}`);
-    this.hpBar.width = 142 * Math.max(0, run.hp / run.maxHp);
+    this.goldText.setText(`🪙${run.gold}`);
+    this.hpText.setText(`${Math.ceil(run.hp)}/${run.maxHp}`);
+    this.hpBar.width = 104 * Math.max(0, run.hp / run.maxHp);
     this.ammoText.setText(`강화 화살  ${'●'.repeat(run.ammo)}${'○'.repeat(3 - run.ammo)}`);
     this.mercText.setText(run.mercenaries.length ? `용병 ${run.mercenaries.length}명` : '용병 없음');
   }
 
   startWave() {
     this.spawned = 0;
-    this.targetCount = this.wave === 1 ? 6 : this.wave === 2 ? 8 : 8;
+    const waveConfig = this.stageConfig.waves[this.wave - 1];
+    this.spawnQueue = waveConfig.enemies.flatMap(group => Array(group.count).fill(group.type));
+    this.targetCount = this.spawnQueue.length;
     this.spawning = true;
-    this.waveText.setText(`스테이지 ${run.stage} · 웨이브 ${this.wave}/3`);
-    this.showNotice(this.wave === 3 ? '마지막 웨이브! 보스를 준비하세요' : `웨이브 ${this.wave} 시작`);
+    this.showNotice(`웨이브 ${this.wave} 시작`);
   }
 
   trySpawn() {
@@ -104,23 +111,21 @@ class BattleScene extends Phaser.Scene {
       this.spawning = false;
       return;
     }
+    this.spawnEnemy(this.spawnQueue[this.spawned]);
     this.spawned++;
-    const boss = this.wave === 3 && this.spawned === this.targetCount;
-    this.spawnEnemy(boss);
   }
 
-  spawnEnemy(boss) {
-    const hp = boss ? 150 + run.stage * 25 : 26 + this.wave * 8 + run.stage * 4;
-    const size = boss ? 28 : 17;
-    const body = this.add.container(WIDTH + size, Phaser.Math.Between(300, 580));
-    body.add(this.add.circle(0, 0, size, boss ? 0x704575 : colors.monster));
+  spawnEnemy(typeKey) {
+    const definition = this.stageData.monsterTypes[typeKey];
+    const { hp, size, speed, damage, reward, autoDamageMultiplier, strongDamageMultiplier } = definition;
+    const body = this.add.container(WIDTH + size, Phaser.Math.Between(75, HEIGHT - 145));
+    body.add(this.add.circle(0, 0, size, Number(definition.color)));
     body.add(this.add.circle(-size * 0.35, -3, 3, 0xfff4c4));
     body.add(this.add.circle(size * 0.35, -3, 3, 0xfff4c4));
-    if (boss) body.add(label(this, 0, -size - 25, 'BOSS', 12, '#ffd476').setOrigin(0.5));
     const barBg = this.add.rectangle(0, -size - 10, size * 2, 5, 0x262331);
-    const bar = this.add.rectangle(-size, -size - 10, size * 2, 5, boss ? 0xf6c85f : 0x8ccf7e).setOrigin(0, 0.5);
+    const bar = this.add.rectangle(-size, -size - 10, size * 2, 5, 0x8ccf7e).setOrigin(0, 0.5);
     body.add([barBg, bar]);
-    this.enemies.push({ body, bar, hp, maxHp: hp, speed: boss ? 11 : Phaser.Math.Between(16, 26), damage: boss ? 28 : 12, reward: boss ? 35 : 7, boss });
+    this.enemies.push({ body, bar, hp, maxHp: hp, speed, damage, reward, size, autoDamageMultiplier, strongDamageMultiplier });
   }
 
   nearestEnemy(x, y) {
@@ -130,10 +135,10 @@ class BattleScene extends Phaser.Scene {
     }, null)?.enemy;
   }
 
-  fire(target, damage, tint) {
+  fire(target, damage, tint, attackType = 'auto') {
     if (!target) return;
-    const shot = this.add.circle(108, 460, 6, tint);
-    this.shots.push({ shot, target, damage, speed: 580 });
+    const shot = this.add.circle(92, 122, 8, tint).setStrokeStyle(2, 0xffffff);
+    this.shots.push({ shot, target, damage, attackType, speed: 580 });
   }
 
   manualAttack(x, y) {
@@ -141,7 +146,7 @@ class BattleScene extends Phaser.Scene {
     const target = this.nearestEnemy(x, y);
     if (!target) { this.showNotice('조준할 몬스터가 없습니다'); return; }
     run.ammo--;
-    this.fire(target, 38 + run.skillLevel * 6 + run.equipmentLevel * 2, colors.gold);
+    this.fire(target, 38 + run.skillLevel * 6 + run.equipmentLevel * 2, colors.gold, 'strong');
     this.updateHud();
   }
 
@@ -151,20 +156,20 @@ class BattleScene extends Phaser.Scene {
 
   autoAttack(time) {
     if (time - this.lastAutoShot > 850) {
-      this.fire(this.nearestEnemy(105, 460), 11 + run.skillLevel * 2 + run.equipmentLevel * 2, colors.blue);
+      this.fire(this.nearestEnemy(92, 122), 11 + run.skillLevel * 2 + run.equipmentLevel * 2, colors.blue);
       this.lastAutoShot = time;
     }
     if (run.mercenaries.length && time - this.lastMercenaryShot > 1050) {
-      for (let index = 0; index < run.mercenaries.length; index++) this.fire(this.nearestEnemy(120, 480 + index * 24), 8 + run.equipmentLevel, 0xb9e2a5);
+      for (let index = 0; index < run.mercenaries.length; index++) this.fire(this.nearestEnemy(92, 150 + index * 24), 8 + run.equipmentLevel, 0xb9e2a5);
       this.lastMercenaryShot = time;
     }
   }
 
-  hit(enemy, damage) {
+  hit(enemy, damage, attackType) {
     const index = this.enemies.indexOf(enemy);
     if (index < 0) return;
-    enemy.hp -= damage;
-    enemy.bar.width = (enemy.body.list[0].radius * 2) * Math.max(0, enemy.hp / enemy.maxHp);
+    enemy.hp -= damage * (attackType === 'strong' ? enemy.strongDamageMultiplier : enemy.autoDamageMultiplier);
+    enemy.bar.width = enemy.size * 2 * Math.max(0, enemy.hp / enemy.maxHp);
     if (enemy.hp <= 0) this.killEnemy(enemy);
   }
 
@@ -187,7 +192,7 @@ class BattleScene extends Phaser.Scene {
 
   checkWaveComplete() {
     if (this.spawning || this.enemies.length) return;
-    if (this.wave < 3) {
+    if (this.wave < this.stageConfig.waves.length) {
       this.wave++;
       this.time.delayedCall(1500, this.startWave, [], this);
     } else {
@@ -238,7 +243,7 @@ class BattleScene extends Phaser.Scene {
       if (Phaser.Math.Distance.Between(projectile.shot.x, projectile.shot.y, projectile.target.body.x, projectile.target.body.y) < 18) {
         projectile.shot.destroy();
         this.shots.splice(this.shots.indexOf(projectile), 1);
-        this.hit(projectile.target, projectile.damage);
+        this.hit(projectile.target, projectile.damage, projectile.attackType);
       }
     }
   }
@@ -258,7 +263,7 @@ class CampScene extends Phaser.Scene {
     this.makeButton(25, 260, '스킬 강화  35G', () => this.upgradeSkill());
     this.makeButton(25, 338, '장비 강화  40G', () => this.upgradeEquipment());
     this.equipmentText = label(this, 25, 450, '', 14, '#d4dfeb', { wordWrap: { width: 340 } });
-    this.nextButton = this.makeButton(25, 670, `다음 전투 시작`, () => { run.stage++; run.hp = run.maxHp; run.ammo = 3; this.scene.start('battle'); }, '#8ccf7e', '#172033');
+    this.nextButton = this.makeButton(25, 670, '다음 전투 시작', () => this.startNextStage(), '#8ccf7e', '#172033');
     this.refresh();
   }
 
@@ -292,6 +297,16 @@ class CampScene extends Phaser.Scene {
     this.goldText.setText(`보유 골드  🪙 ${run.gold}`);
     const equipment = run.equipment.length ? run.equipment.join(', ') : '아직 획득한 장비가 없습니다';
     this.equipmentText.setText(`용병: ${run.mercenaries.join(', ') || '없음'}\n스킬 레벨: ${run.skillLevel}  |  장비 강화: +${run.equipmentLevel}\n\n보유 장비\n${equipment}`);
+  }
+
+  startNextStage() {
+    const stageData = this.cache.json.get('stageData');
+    const nextStage = stageData.stages.find(stage => stage.id === run.stage + 1);
+    if (!nextStage) return this.notice('다음 스테이지는 준비 중입니다');
+    run.stage++;
+    run.hp = run.maxHp;
+    run.ammo = 3;
+    this.scene.start('battle');
   }
 
   notice(text) {

@@ -1,0 +1,47 @@
+{
+  "monsterTypes": {
+    "normal": {
+      "name": "일반 몬스터",
+      "hp": 38,
+      "speed": 19,
+      "size": 17,
+      "damage": 12,
+      "reward": 7,
+      "color": "0x9c5f6a",
+      "autoDamageMultiplier": 1,
+      "strongDamageMultiplier": 1
+    },
+    "small": {
+      "name": "날쌘 몬스터",
+      "hp": 10,
+      "speed": 29,
+      "size": 11,
+      "damage": 8,
+      "reward": 5,
+      "color": "0xdca85a",
+      "autoDamageMultiplier": 1,
+      "strongDamageMultiplier": 1
+    },
+    "tank": {
+      "name": "중장갑 몬스터",
+      "hp": 120,
+      "speed": 10,
+      "size": 26,
+      "damage": 22,
+      "reward": 14,
+      "color": "0x6a6577",
+      "autoDamageMultiplier": 0.25,
+      "strongDamageMultiplier": 2.4
+    }
+  },
+  "stages": [
+    {
+      "id": 1,
+      "waves": [
+        { "enemies": [{ "type": "normal", "count": 3 }] },
+        { "enemies": [{ "type": "normal", "count": 3 }] },
+        { "enemies": [{ "type": "normal", "count": 3 }] }
+      ]
+    }
+  ]
+}
